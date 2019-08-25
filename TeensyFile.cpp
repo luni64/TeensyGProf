@@ -1,7 +1,7 @@
 /************
- * 
+ *
  * Copyright 2019 by Fernando Trias. All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
  * including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -201,5 +201,44 @@ extern "C" int TeensyProf_close(int fp) {
   mystream->println("END");
   return 1;
 }
+
+
+#elif TEENSYPROF_OUT==5 //"HIDFILE"
+
+enum cmd : uint8_t{open = 1, close = 2, data = 4};
+
+extern "C" int TeensyProf_open(const char *fn, int flags, int perm) {
+  uint8_t buf[64];
+  buf[0] = cmd::open;
+  usb_rawhid_send(buf,1000);
+  return 1;
+}
+
+extern "C" int TeensyProf_write(int fp, const void *data, int length) {
+  uint8_t len;
+  uint8_t buf[64];
+  const uint8_t *d = (const uint8_t *)data;
+  while (1) {
+    len = length > 62 ? 62 : length;
+    buf[0] = cmd::data;
+    buf[1] = len;
+    memcpy(buf + 2, d, len);
+    usb_rawhid_send(buf, 1000);
+
+    d += len;
+    length -= len;
+    if (length <=0) break;
+  }
+  return length;
+}
+
+extern "C" int TeensyProf_close(int fp) {
+  Serial.printf("close\n");
+  char x[64];
+  x[0] = cmd::close;
+  usb_rawhid_send(x,1000);
+  return 1;
+}
+
 
 #endif

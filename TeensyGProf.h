@@ -12,6 +12,6 @@ int gprof_start();
 }
 #endif
 
-#define TEENSYPROF_OUT 2
+#define TEENSYPROF_OUT 5
 
 #endif
